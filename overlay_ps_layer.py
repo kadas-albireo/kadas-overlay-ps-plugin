@@ -17,8 +17,8 @@ class OverlayPSLayer(QgsPluginLayer):
 
         self.setValid(True)
         self.center = QgsPoint()
-        self.azimut = None
-        self.color = Qt.red
+        self.azimut = 22.5
+        self.color = Qt.black
         self.lineWidth = 3
         self.transparency = 0
         self.layer_name = layer_name
@@ -128,19 +128,27 @@ class Renderer(QgsMapLayerRenderer):
 
         # draw rings
         wgsCenter = ct.transform(self.layer.center)
-
-        radMeters = 230
+        radMeters = 3500
+        point = self.mDa.computeDestination(wgsCenter,
+                                            radMeters,
+                                            self.layer.getAzimut() + 90)
+        line = self.geod.InverseLine(wgsCenter.y(), wgsCenter.x(),
+                                     point.y(), point.x())
+        newCenter = QgsPoint(line.Position(1750)["lon2"],
+                             line.Position(1750)["lat2"])
         poly = QPolygonF()
-        for a in range(361):
-            wgsPoint = self.mDa.computeDestination(wgsCenter, radMeters, a)
+        for a in range(360):
+            wgsPoint = self.mDa.computeDestination(newCenter, radMeters, a)
             mapPoint = rct.transform(wgsPoint)
             poly.append(mapToPixel.transform(mapPoint).toQPointF())
+        # for idx in range(150, 210):
+        #     poly.remove(idx)
         path = QPainterPath()
         path.addPolygon(poly)
         self.rendererContext.painter().drawPath(path)
 
         # draw axes
-        axisRadiusMeters = 1 * QGis.fromUnitToUnitFactor(QGis.NauticalMiles, QGis.Meters)
+        axisRadiusMeters = 7000
         bearing = self.layer.getAzimut()
         for counter in range(2):
             wgsPoint = self.mDa.computeDestination(wgsCenter,
@@ -148,7 +156,7 @@ class Renderer(QgsMapLayerRenderer):
             line = self.geod.InverseLine(wgsCenter.y(), wgsCenter.x(),
                                          wgsPoint.y(), wgsPoint.x())
             dist = line.s13
-            sdist = 50
+            sdist = 25
             nSegments = max(1, int(math.ceil(dist / sdist)))
             poly = QPolygonF()
             for iseg in range(nSegments):
@@ -164,21 +172,19 @@ class Renderer(QgsMapLayerRenderer):
             bearing = self.layer.getAzimut() + 180
 
         # draw flight lines
-        self.rendererContext.painter().setPen(QPen(
-            self.layer.color, self.layer.lineWidth, Qt.DashLine))
-        lineRadiusMeters = 1.5 * QGis.fromUnitToUnitFactor(QGis.NauticalMiles, QGis.Meters)
+        lineRadiusMeters = 6000
         bearing = self.layer.getAzimut() + 45
-        for counter in range(2):
+        for counter in range(3):
             wgsPoint = self.mDa.computeDestination(wgsCenter,
                                                    lineRadiusMeters, bearing)
             line = self.geod.InverseLine(wgsCenter.y(), wgsCenter.x(),
                                          wgsPoint.y(), wgsPoint.x())
             dist = line.s13
-            sdist = 50
+            sdist = 500
             nSegments = max(1, int(math.ceil(dist / sdist)))
             poly = QPolygonF()
             for iseg in range(nSegments):
-                if iseg in range(2):
+                if iseg in range(3):
                     continue
                 coords = line.Position(iseg * sdist)
                 mapPoint = rct.transform(QgsPoint(coords["lon2"], coords["lat2"]))
@@ -189,7 +195,7 @@ class Renderer(QgsMapLayerRenderer):
             path = QPainterPath()
             path.addPolygon(poly)
             self.rendererContext.painter().drawPath(path)
-            bearing += 90
+            bearing += 45
 
         self.rendererContext.painter().restore()
         return True

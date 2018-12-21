@@ -160,8 +160,8 @@ class OverlayPSWidget(QgsBottomBar, FORM_CLASS):
                 self.iface.mapCanvas().extent().center(),
                 self.iface.mapCanvas().mapSettings().destinationCrs(),
                 22.5)
-            QgsMapLayerRegistry.instance().addMapLayer(OverlayPSLayer)
-            self.setLayer(OverlayPSLayer)
+            QgsMapLayerRegistry.instance().addMapLayer(OverlayPsLayer)
+            self.setLayer(OverlayPsLayer)
 
     def setLayer(self, layer):
         if layer == self.currentLayer:
