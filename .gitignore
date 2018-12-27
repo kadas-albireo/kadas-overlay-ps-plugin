@@ -1,0 +1,8 @@
+*.zip
+*.pyc
+*.e4p
+*.e4q
+*.e6t
+*~
+.eric6project
+forms/xml/xml.metadata.get.xml
