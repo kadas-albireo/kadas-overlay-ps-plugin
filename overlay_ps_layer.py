@@ -128,7 +128,7 @@ class Renderer(QgsMapLayerRenderer):
 
         # draw rings
         wgsCenter = ct.transform(self.layer.center)
-        radMeters = 3500
+        radMeters = 1750
         point = self.mDa.computeDestination(wgsCenter,
                                             radMeters,
                                             self.layer.getAzimut() + 90)
@@ -137,12 +137,18 @@ class Renderer(QgsMapLayerRenderer):
         newCenter = QgsPoint(line.Position(1750)["lon2"],
                              line.Position(1750)["lat2"])
         poly = QPolygonF()
-        for a in range(360):
-            wgsPoint = self.mDa.computeDestination(newCenter, radMeters, a)
+        for a in range(210, 361):
+            wgsPoint = self.mDa.computeDestination(
+                newCenter, radMeters, a + self.layer.getAzimut() + 90)
             mapPoint = rct.transform(wgsPoint)
             poly.append(mapToPixel.transform(mapPoint).toQPointF())
-        # for idx in range(150, 210):
-        #     poly.remove(idx)
+
+        for a in range(0, 150):
+            wgsPoint = self.mDa.computeDestination(
+                newCenter, radMeters, a + self.layer.getAzimut() + 90)
+            mapPoint = rct.transform(wgsPoint)
+            poly.append(mapToPixel.transform(mapPoint).toQPointF())
+
         path = QPainterPath()
         path.addPolygon(poly)
         self.rendererContext.painter().drawPath(path)
@@ -155,11 +161,11 @@ class Renderer(QgsMapLayerRenderer):
                                                    axisRadiusMeters, bearing)
             line = self.geod.InverseLine(wgsCenter.y(), wgsCenter.x(),
                                          wgsPoint.y(), wgsPoint.x())
-            dist = line.s13
-            sdist = 25
+            dist = 7000
+            sdist = 500
             nSegments = max(1, int(math.ceil(dist / sdist)))
             poly = QPolygonF()
-            for iseg in range(nSegments):
+            for iseg in range(nSegments + 1):
                 coords = line.Position(iseg * sdist)
                 mapPoint = rct.transform(QgsPoint(coords["lon2"], coords["lat2"]))
                 poly.append(mapToPixel.transform(mapPoint).toQPointF())
@@ -179,11 +185,11 @@ class Renderer(QgsMapLayerRenderer):
                                                    lineRadiusMeters, bearing)
             line = self.geod.InverseLine(wgsCenter.y(), wgsCenter.x(),
                                          wgsPoint.y(), wgsPoint.x())
-            dist = line.s13
+            dist = 6000
             sdist = 500
             nSegments = max(1, int(math.ceil(dist / sdist)))
             poly = QPolygonF()
-            for iseg in range(nSegments):
+            for iseg in range(nSegments + 1):
                 if iseg in range(3):
                     continue
                 coords = line.Position(iseg * sdist)
