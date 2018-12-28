@@ -210,12 +210,18 @@ class Renderer(QgsMapLayerRenderer):
                     mapPoint = rct.transform(QgsPoint(coords["lon2"],
                                                       coords["lat2"]))
                     poly.append(mapToPixel.transform(mapPoint).toQPointF())
+                    path = QPainterPath()
+                    path.addPolygon(poly)
+                    self.rendererContext.painter().drawPath(path)
+                    bear += 180
 
                     # draw label
                     if a == 1:
+                        if labels.index(point) == 0:
+                            continue
                         metrics = QFontMetrics(
                             self.rendererContext.painter().font())
-                        label = "%s km" % counter
+                        label = "%s km" % labels.index(point)
                         n = poly.size()
                         dx = poly[n - 2].x() - poly[n - 4].x() if n > 1 else 0
                         dy = poly[n - 2].y() - poly[n - 4].y() if n > 1 else 0
@@ -227,11 +233,6 @@ class Renderer(QgsMapLayerRenderer):
                         self.rendererContext.painter().drawText(
                             x - 0.5 * w, y - d, w, 2 * d,
                             Qt.AlignCenter | Qt.AlignHCenter, label)
-
-                    path = QPainterPath()
-                    path.addPolygon(poly)
-                    self.rendererContext.painter().drawPath(path)
-                    bear += 180
 
         # draw flight lines
         lineRadiusMeters = 6000
@@ -265,6 +266,7 @@ class Renderer(QgsMapLayerRenderer):
             bearing += 45
 
             # draw kilometer mark
+            kmLabel = [2, 3, 4, 5]
             for point in labels:
                 if counter == 0:
                     bear = self.layer.getAzimut() + 315
@@ -289,11 +291,17 @@ class Renderer(QgsMapLayerRenderer):
                     mapPoint = rct.transform(QgsPoint(coords["lon2"],
                                                       coords["lat2"]))
                     poly.append(mapToPixel.transform(mapPoint).toQPointF())
+                    path = QPainterPath()
+                    path.addPolygon(poly)
+                    self.rendererContext.painter().drawPath(path)
+                    bear += 180
                     # draw label
                     if a == 0:
+                        if point == labels[-1]:
+                            continue
                         metrics = QFontMetrics(
                             self.rendererContext.painter().font())
-                        label = "%s km" % counter
+                        label = "%s km" % kmLabel[labels.index(point)]
                         n = poly.size()
                         dx = poly[n - 2].x() - poly[n - 4].x() if n > 1 else 0
                         dy = poly[n - 2].y() - poly[n - 4].y() if n > 1 else 0
@@ -305,11 +313,6 @@ class Renderer(QgsMapLayerRenderer):
                         self.rendererContext.painter().drawText(
                             x - 0.5 * w, y - d, w, 2 * d,
                             Qt.AlignCenter | Qt.AlignHCenter, label)
-
-                    path = QPainterPath()
-                    path.addPolygon(poly)
-                    self.rendererContext.painter().drawPath(path)
-                    bear += 180
 
         self.rendererContext.painter().restore()
         return True
