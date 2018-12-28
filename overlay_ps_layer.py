@@ -1,9 +1,6 @@
-import os
 import math
-from enum import Enum
 from geographiclib.geodesic import Geodesic
 
-from PyQt4 import uic
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from qgis.core import *
@@ -157,19 +154,23 @@ class Renderer(QgsMapLayerRenderer):
         axisRadiusMeters = 7000
         bearing = self.layer.getAzimut()
         for counter in range(2):
+            labels = []
             wgsPoint = self.mDa.computeDestination(wgsCenter,
                                                    axisRadiusMeters, bearing)
             line = self.geod.InverseLine(wgsCenter.y(), wgsCenter.x(),
                                          wgsPoint.y(), wgsPoint.x())
             dist = 7000
-            sdist = 500
+            sdist = 1000
             nSegments = max(1, int(math.ceil(dist / sdist)))
             poly = QPolygonF()
             for iseg in range(nSegments + 1):
                 coords = line.Position(iseg * sdist)
-                mapPoint = rct.transform(QgsPoint(coords["lon2"], coords["lat2"]))
+                labels.append(QgsPoint(coords["lon2"], coords["lat2"]))
+                mapPoint = rct.transform(QgsPoint(coords["lon2"],
+                                                  coords["lat2"]))
                 poly.append(mapToPixel.transform(mapPoint).toQPointF())
             line.Position(dist)
+
             mapPoint = rct.transform(QgsPoint(coords["lon2"], coords["lat2"]))
             poly.append(mapToPixel.transform(mapPoint).toQPointF())
             path = QPainterPath()
@@ -177,10 +178,36 @@ class Renderer(QgsMapLayerRenderer):
             self.rendererContext.painter().drawPath(path)
             bearing = self.layer.getAzimut() + 180
 
+            # draw kilometer mark
+            for point in labels:
+                bear = self.layer.getAzimut() + 90
+                for a in range(2):
+                    wgsPoint = self.mDa.computeDestination(
+                        point, 250,
+                        bear)
+                    line = self.geod.InverseLine(point.y(),
+                                                 point.x(),
+                                                 wgsPoint.y(), wgsPoint.x())
+                    poly = QPolygonF()
+                    for iseg in range(5):
+                        coords = line.Position(iseg * 50)
+                        mapPoint = rct.transform(QgsPoint(coords["lon2"],
+                                                          coords["lat2"]))
+                        poly.append(mapToPixel.transform(mapPoint).toQPointF())
+                    line.Position(100)
+                    mapPoint = rct.transform(QgsPoint(coords["lon2"],
+                                                      coords["lat2"]))
+                    poly.append(mapToPixel.transform(mapPoint).toQPointF())
+                    path = QPainterPath()
+                    path.addPolygon(poly)
+                    self.rendererContext.painter().drawPath(path)
+                    bear += 180
+
         # draw flight lines
         lineRadiusMeters = 6000
         bearing = self.layer.getAzimut() + 45
         for counter in range(3):
+            labels = []
             wgsPoint = self.mDa.computeDestination(wgsCenter,
                                                    lineRadiusMeters, bearing)
             line = self.geod.InverseLine(wgsCenter.y(), wgsCenter.x(),
@@ -193,8 +220,12 @@ class Renderer(QgsMapLayerRenderer):
                 if iseg in range(3):
                     continue
                 coords = line.Position(iseg * sdist)
-                mapPoint = rct.transform(QgsPoint(coords["lon2"], coords["lat2"]))
+                if iseg != 3 and iseg % 2 == 0:
+                    labels.append(QgsPoint(coords["lon2"], coords["lat2"]))
+                mapPoint = rct.transform(QgsPoint(coords["lon2"],
+                                                  coords["lat2"]))
                 poly.append(mapToPixel.transform(mapPoint).toQPointF())
+
             line.Position(dist)
             mapPoint = rct.transform(QgsPoint(coords["lon2"], coords["lat2"]))
             poly.append(mapToPixel.transform(mapPoint).toQPointF())
@@ -202,6 +233,37 @@ class Renderer(QgsMapLayerRenderer):
             path.addPolygon(poly)
             self.rendererContext.painter().drawPath(path)
             bearing += 45
+
+            # draw kilometer mark
+            for point in labels:
+                if counter == 0:
+                    bear = self.layer.getAzimut() + 135
+                elif counter == 1:
+                    bear = self.layer.getAzimut()
+                else:
+                    bear = self.layer.getAzimut() + 45
+                for a in range(2):
+                    wgsPoint = self.mDa.computeDestination(
+                        point, 250,
+                        bear)
+                    line = self.geod.InverseLine(point.y(),
+                                                 point.x(),
+                                                 wgsPoint.y(), wgsPoint.x())
+                    poly = QPolygonF()
+                    for iseg in range(5):
+                        coords = line.Position(iseg * 50)
+                        mapPoint = rct.transform(QgsPoint(coords["lon2"],
+                                                          coords["lat2"]))
+                        poly.append(mapToPixel.transform(mapPoint).toQPointF())
+                    line.Position(100)
+                    mapPoint = rct.transform(QgsPoint(coords["lon2"],
+                                                      coords["lat2"]))
+                    poly.append(mapToPixel.transform(mapPoint).toQPointF())
+
+                    path = QPainterPath()
+                    path.addPolygon(poly)
+                    self.rendererContext.painter().drawPath(path)
+                    bear += 180
 
         self.rendererContext.painter().restore()
         return True
