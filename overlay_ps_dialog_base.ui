@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>QgsOverlayPS7WidgetBase</class>
+ <class>QgsOverlayPSWidgetBase</class>
  <widget class="QWidget" name="QgsOverlayPSWidgetBase">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>438</width>
-    <height>133</height>
+    <height>170</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -32,20 +32,6 @@
       <bool>false</bool>
      </property>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="0">
-       <widget class="QLabel" name="labelCenter">
-        <property name="text">
-         <string>Center:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="3">
-       <widget class="QLabel" name="labelAxes">
-        <property name="text">
-         <string>Azimut</string>
-        </property>
-       </widget>
-      </item>
       <item row="0" column="4" rowspan="2">
        <widget class="QDoubleSpinBox" name="spinBoxAzimut">
         <property name="suffix">
@@ -59,6 +45,47 @@
         </property>
         <property name="value">
          <double>33.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QgsColorButtonV2" name="toolButtonColor">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="3">
+       <widget class="QLabel" name="labelLineWidth">
+        <property name="text">
+         <string>Line width:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="labelCenter">
+        <property name="text">
+         <string>Center:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="labelColor">
+        <property name="text">
+         <string>Color:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="4">
+       <widget class="QSpinBox" name="spinBoxLineWidth"/>
+      </item>
+      <item row="0" column="3">
+       <widget class="QLabel" name="labelAxes">
+        <property name="text">
+         <string>Azimut</string>
         </property>
        </widget>
       </item>
@@ -101,32 +128,25 @@
         </layout>
        </widget>
       </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="labelColor">
+      <item row="4" column="0">
+       <widget class="QLabel" name="labelFontSize">
         <property name="text">
-         <string>Color:</string>
+         <string>Font size:</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="1">
-       <widget class="QgsColorButtonV2" name="toolButtonColor">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
+      <item row="4" column="1">
+       <widget class="QSpinBox" name="spinBoxFontSize">
+        <property name="suffix">
+         <string> px</string>
+        </property>
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="value">
+         <number>3</number>
         </property>
        </widget>
-      </item>
-      <item row="3" column="3">
-       <widget class="QLabel" name="labelLineWidth">
-        <property name="text">
-         <string>Line width:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="4">
-       <widget class="QSpinBox" name="spinBoxLineWidth"/>
       </item>
      </layout>
     </widget>

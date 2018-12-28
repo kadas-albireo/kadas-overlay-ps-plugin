@@ -17,6 +17,7 @@ class OverlayPSLayer(QgsPluginLayer):
         self.azimut = 22.5
         self.color = Qt.black
         self.lineWidth = 3
+        self.fontSize = 10
         self.transparency = 0
         self.layer_name = layer_name
 
@@ -58,11 +59,17 @@ class OverlayPSLayer(QgsPluginLayer):
     def getLineWidth(self):
         return self.lineWidth
 
+    def getFontSize(self):
+        return self.fontSize
+
     def setColor(self, color):
         self.color = color
 
     def setLineWidth(self, lineWidth):
         self.lineWidth = lineWidth
+
+    def setFontSize(self, fontSize):
+        self.fontSize = fontSize
 
     def readXml(self, layer_node):
         layerEl = layer_node.toElement()
@@ -74,6 +81,7 @@ class OverlayPSLayer(QgsPluginLayer):
         self.color = QgsSymbolLayerV2Utils.decodeColor(layerEl.attribute(
             "color"))
         self.lineWidth = int(layerEl.attribute("lineWidth"))
+        self.fontSize = int(layerEl.attribute("fontSize"))
 
         self.setCrs(QgsCRSCache.instance().crsByAuthId(layerEl.attribute(
             "crs")))
@@ -92,6 +100,7 @@ class OverlayPSLayer(QgsPluginLayer):
         layerEl.setAttribute("color", QgsSymbolLayerV2Utils.encodeColor(
             self.color))
         layerEl.setAttribute("lineWidth", self.getLineWidth())
+        layerEl.setAttribute("fontSize", self.getFontSize())
         return True
 
 
@@ -117,6 +126,9 @@ class Renderer(QgsMapLayerRenderer):
             QPainter.CompositionMode_Source)
         self.rendererContext.painter().setPen(
             QPen(self.layer.color, self.layer.lineWidth))
+        font = self.rendererContext.painter().font()
+        font.setPixelSize(self.layer.getFontSize())
+        self.rendererContext.painter().setFont(font)
 
         ct = QgsCoordinateTransformCache.instance().transform(
             self.layer.crs().authid(), "EPSG:4326")
@@ -198,6 +210,24 @@ class Renderer(QgsMapLayerRenderer):
                     mapPoint = rct.transform(QgsPoint(coords["lon2"],
                                                       coords["lat2"]))
                     poly.append(mapToPixel.transform(mapPoint).toQPointF())
+
+                    # draw label
+                    if a == 1:
+                        metrics = QFontMetrics(
+                            self.rendererContext.painter().font())
+                        label = "%s km" % counter
+                        n = poly.size()
+                        dx = poly[n - 2].x() - poly[n - 4].x() if n > 1 else 0
+                        dy = poly[n - 2].y() - poly[n - 4].y() if n > 1 else 0
+                        l = math.sqrt(dx * dx + dy * dy)
+                        d = self.layer.getFontSize()
+                        w = metrics.width(label)
+                        x = poly.last().x() if n < 2 else poly.last().x() + d * dx / l
+                        y = poly.last().y() if n < 2 else poly.last().y() + d * dy / l
+                        self.rendererContext.painter().drawText(
+                            x - 0.5 * w, y - d, w, 2 * d,
+                            Qt.AlignCenter | Qt.AlignHCenter, label)
+
                     path = QPainterPath()
                     path.addPolygon(poly)
                     self.rendererContext.painter().drawPath(path)
@@ -237,7 +267,7 @@ class Renderer(QgsMapLayerRenderer):
             # draw kilometer mark
             for point in labels:
                 if counter == 0:
-                    bear = self.layer.getAzimut() + 135
+                    bear = self.layer.getAzimut() + 315
                 elif counter == 1:
                     bear = self.layer.getAzimut()
                 else:
@@ -259,6 +289,22 @@ class Renderer(QgsMapLayerRenderer):
                     mapPoint = rct.transform(QgsPoint(coords["lon2"],
                                                       coords["lat2"]))
                     poly.append(mapToPixel.transform(mapPoint).toQPointF())
+                    # draw label
+                    if a == 0:
+                        metrics = QFontMetrics(
+                            self.rendererContext.painter().font())
+                        label = "%s km" % counter
+                        n = poly.size()
+                        dx = poly[n - 2].x() - poly[n - 4].x() if n > 1 else 0
+                        dy = poly[n - 2].y() - poly[n - 4].y() if n > 1 else 0
+                        l = math.sqrt(dx * dx + dy * dy)
+                        d = self.layer.getFontSize()
+                        w = metrics.width(label)
+                        x = poly.last().x() if n < 2 else poly.last().x() + d * dx / l
+                        y = poly.last().y() if n < 2 else poly.last().y() + d * dy / l
+                        self.rendererContext.painter().drawText(
+                            x - 0.5 * w, y - d, w, 2 * d,
+                            Qt.AlignCenter | Qt.AlignHCenter, label)
 
                     path = QPainterPath()
                     path.addPolygon(poly)

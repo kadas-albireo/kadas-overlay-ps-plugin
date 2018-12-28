@@ -133,6 +133,7 @@ class OverlayPSWidget(QgsBottomBar, FORM_CLASS):
         self.spinBoxAzimut.valueChanged.connect(self.updateLayer)
         self.spinBoxLineWidth.valueChanged.connect(self.updateLineWidth)
         self.toolButtonColor.colorChanged.connect(self.updateColor)
+        self.spinBoxFontSize.valueChanged.connect(self.updateFontSize)
 
         QgsMapLayerRegistry.instance().layersAdded.connect(
             self.repopulateLayers)
@@ -191,6 +192,7 @@ class OverlayPSWidget(QgsBottomBar, FORM_CLASS):
         self.toolButtonColor.setColor(self.currentLayer.getColor())
         self.toolButtonColor.blockSignals(False)
         self.widgetLayerSetup.setEnabled(True)
+        self.spinBoxFontSize.setValue(self.currentLayer.getFontSize())
 
     def updateLayer(self):
         if not self.currentLayer or self.inputCenter.isEmpty():
@@ -209,6 +211,11 @@ class OverlayPSWidget(QgsBottomBar, FORM_CLASS):
     def updateLineWidth(self, width):
         if self.currentLayer:
             self.currentLayer.setLineWidth(width)
+            self.currentLayer.triggerRepaint()
+
+    def updateFontSize(self, fontSize):
+        if self.currentLayer:
+            self.currentLayer.setFontSize(fontSize)
             self.currentLayer.triggerRepaint()
 
     def repopulateLayers(self):
