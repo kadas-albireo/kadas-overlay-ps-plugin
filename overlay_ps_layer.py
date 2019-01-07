@@ -311,7 +311,7 @@ class Renderer(QgsMapLayerRenderer):
                         x = poly.last().x() if n < 2 else poly.last().x() + d * dx / l
                         y = poly.last().y() if n < 2 else poly.last().y() + d * dy / l
                         self.rendererContext.painter().drawText(
-                            x - 0.5 * w, y - d, w, 2 * d,
+                            x - 0.5 * w, y - (1.5 * d), w, 2 * d,
                             Qt.AlignCenter | Qt.AlignHCenter, label)
 
         self.rendererContext.painter().restore()
