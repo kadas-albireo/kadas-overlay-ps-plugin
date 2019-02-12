@@ -183,13 +183,7 @@ class Renderer(QgsMapLayerRenderer):
         newCenter = QgsPoint(line.Position(1750)["lon2"],
                              line.Position(1750)["lat2"])
         poly = QPolygonF()
-        for a in range(210, 361):
-            wgsPoint = self.mDa.computeDestination(
-                newCenter, radMeters, a + azimut + 90)
-            mapPoint = rct.transform(wgsPoint)
-            poly.append(mapToPixel.transform(mapPoint).toQPointF())
-
-        for a in range(0, 150):
+        for a in range(-150, 151):
             wgsPoint = self.mDa.computeDestination(
                 newCenter, radMeters, a + azimut + 90)
             mapPoint = rct.transform(wgsPoint)
