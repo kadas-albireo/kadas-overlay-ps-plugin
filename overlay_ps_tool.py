@@ -8,8 +8,8 @@ from qgis.gui import *
 
 from overlay_ps_layer import OverlayPSLayer
 
-FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'overlay_ps_dialog_base.ui'))
+OverlayPSWidgetBase = uic.loadUiType(os.path.join(
+    os.path.dirname(__file__), 'overlay_ps_dialog_base.ui'))[0]
 
 
 class OverlayPSTool(QgsMapTool):
@@ -99,7 +99,7 @@ class OverlayPSTool(QgsMapTool):
         return QCoreApplication.translate('OverlayPS', message)
 
 
-class OverlayPSWidget(QgsBottomBar, FORM_CLASS):
+class OverlayPSWidget(QgsBottomBar, OverlayPSWidgetBase):
 
     requestPickCenter = pyqtSignal()
     close = pyqtSignal()
