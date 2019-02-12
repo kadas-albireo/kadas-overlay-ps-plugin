@@ -117,7 +117,43 @@ class Renderer(QgsMapLayerRenderer):
         self.mDa.setEllipsoidalMode(True)
         self.mDa.setSourceCrs(QgsCRSCache.instance().crsByAuthId("EPSG:4326"))
 
+    def drawAxisMarks(self, rct, metrics, marks, axisbearing, flip):
+        # draw kilometer marks
+        mapToPixel = self.rendererContext.mapToPixel()
+        for idx, mark in enumerate(marks):
+            point, label = mark
+            s = -1 if flip else 1
+            p1 = self.mDa.computeDestination(point, 250, axisbearing + 90 * s)
+            p2 = self.mDa.computeDestination(point, 250, axisbearing + 270 * s)
+            poly = QPolygonF()
+            poly.append(mapToPixel.transform(rct.transform(p1)).toQPointF())
+            poly.append(mapToPixel.transform(rct.transform(point)).toQPointF())
+            poly.append(mapToPixel.transform(rct.transform(p2)).toQPointF())
+            path = QPainterPath()
+            path.addPolygon(poly)
+            self.rendererContext.painter().drawPath(path)
+
+            # draw label
+            if not label:
+                continue
+            dx = poly[0].x() - poly[2].x()
+            dy = poly[0].y() - poly[2].y()
+            l = math.sqrt(dx * dx + dy * dy)
+            if l > 1E-6:
+                dx /= l
+                dy /= l
+            w = metrics.width(label)
+            h = self.rendererContext.painter().font().pixelSize()
+            cx = poly[2].x() - dx * 0.6 * w
+            cy = poly[2].y() - dy * 0.6 * w
+            self.rendererContext.painter().drawText(
+                cx - 0.5 * w, cy - 0.5 * h, w, h,
+                Qt.AlignCenter | Qt.AlignHCenter, label
+            )
+
     def render(self):
+        azimut = self.layer.getAzimut()
+
         mapToPixel = self.rendererContext.mapToPixel()
         self.rendererContext.painter().save()
         self.rendererContext.painter().setOpacity((
@@ -129,6 +165,7 @@ class Renderer(QgsMapLayerRenderer):
         font = self.rendererContext.painter().font()
         font.setPixelSize(self.layer.getFontSize())
         self.rendererContext.painter().setFont(font)
+        metrics = QFontMetrics(font)
 
         ct = QgsCoordinateTransformCache.instance().transform(
             self.layer.crs().authid(), "EPSG:4326")
@@ -140,7 +177,7 @@ class Renderer(QgsMapLayerRenderer):
         radMeters = 1750
         point = self.mDa.computeDestination(wgsCenter,
                                             radMeters,
-                                            self.layer.getAzimut() + 90)
+                                            azimut + 90)
         line = self.geod.InverseLine(wgsCenter.y(), wgsCenter.x(),
                                      point.y(), point.x())
         newCenter = QgsPoint(line.Position(1750)["lon2"],
@@ -148,13 +185,13 @@ class Renderer(QgsMapLayerRenderer):
         poly = QPolygonF()
         for a in range(210, 361):
             wgsPoint = self.mDa.computeDestination(
-                newCenter, radMeters, a + self.layer.getAzimut() + 90)
+                newCenter, radMeters, a + azimut + 90)
             mapPoint = rct.transform(wgsPoint)
             poly.append(mapToPixel.transform(mapPoint).toQPointF())
 
         for a in range(0, 150):
             wgsPoint = self.mDa.computeDestination(
-                newCenter, radMeters, a + self.layer.getAzimut() + 90)
+                newCenter, radMeters, a + azimut + 90)
             mapPoint = rct.transform(wgsPoint)
             poly.append(mapToPixel.transform(mapPoint).toQPointF())
 
@@ -162,13 +199,12 @@ class Renderer(QgsMapLayerRenderer):
         path.addPolygon(poly)
         self.rendererContext.painter().drawPath(path)
 
-        # draw axes
+        # draw main axis
         axisRadiusMeters = 7000
-        bearing = self.layer.getAzimut()
-        for counter in range(2):
-            labels = []
+        for bearing, flip in [(azimut, False), (azimut + 180, True)]:
+            marks = []
             wgsPoint = self.mDa.computeDestination(wgsCenter,
-                                                   axisRadiusMeters, bearing)
+                                    axisRadiusMeters, bearing)
             line = self.geod.InverseLine(wgsCenter.y(), wgsCenter.x(),
                                          wgsPoint.y(), wgsPoint.x())
             dist = 7000
@@ -177,7 +213,10 @@ class Renderer(QgsMapLayerRenderer):
             poly = QPolygonF()
             for iseg in range(nSegments + 1):
                 coords = line.Position(iseg * sdist)
-                labels.append(QgsPoint(coords["lon2"], coords["lat2"]))
+                marks.append((
+                    QgsPoint(coords["lon2"], coords["lat2"]),
+                    "%s km" % iseg if iseg > 0 else None
+                ))
                 mapPoint = rct.transform(QgsPoint(coords["lon2"],
                                                   coords["lat2"]))
                 poly.append(mapToPixel.transform(mapPoint).toQPointF())
@@ -188,57 +227,13 @@ class Renderer(QgsMapLayerRenderer):
             path = QPainterPath()
             path.addPolygon(poly)
             self.rendererContext.painter().drawPath(path)
-            bearing = self.layer.getAzimut() + 180
 
-            # draw kilometer mark
-            for point in labels:
-                bear = self.layer.getAzimut() + 90
-                for a in range(2):
-                    wgsPoint = self.mDa.computeDestination(
-                        point, 250,
-                        bear)
-                    line = self.geod.InverseLine(point.y(),
-                                                 point.x(),
-                                                 wgsPoint.y(), wgsPoint.x())
-                    poly = QPolygonF()
-                    for iseg in range(5):
-                        coords = line.Position(iseg * 50)
-                        mapPoint = rct.transform(QgsPoint(coords["lon2"],
-                                                          coords["lat2"]))
-                        poly.append(mapToPixel.transform(mapPoint).toQPointF())
-                    line.Position(100)
-                    mapPoint = rct.transform(QgsPoint(coords["lon2"],
-                                                      coords["lat2"]))
-                    poly.append(mapToPixel.transform(mapPoint).toQPointF())
-                    path = QPainterPath()
-                    path.addPolygon(poly)
-                    self.rendererContext.painter().drawPath(path)
-                    bear += 180
-
-                    # draw label
-                    if a == 1:
-                        if labels.index(point) == 0:
-                            continue
-                        metrics = QFontMetrics(
-                            self.rendererContext.painter().font())
-                        label = "%s km" % labels.index(point)
-                        n = poly.size()
-                        dx = poly[n - 2].x() - poly[n - 4].x() if n > 1 else 0
-                        dy = poly[n - 2].y() - poly[n - 4].y() if n > 1 else 0
-                        l = math.sqrt(dx * dx + dy * dy)
-                        d = self.layer.getFontSize()
-                        w = metrics.width(label)
-                        x = poly.last().x() if n < 2 else poly.last().x() + d * dx / l
-                        y = poly.last().y() if n < 2 else poly.last().y() + d * dy / l
-                        self.rendererContext.painter().drawText(
-                            x - 0.5 * w, y - d, w, 2 * d,
-                            Qt.AlignCenter | Qt.AlignHCenter, label)
+            self.drawAxisMarks(rct, metrics, marks, bearing, flip)
 
         # draw flight lines
         lineRadiusMeters = 6000
-        bearing = self.layer.getAzimut() + 45
-        for counter in range(3):
-            labels = []
+        for bearing, flip in [(azimut + 45, False), (azimut + 90, False), (azimut + 135, True)]:
+            marks = []
             wgsPoint = self.mDa.computeDestination(wgsCenter,
                                                    lineRadiusMeters, bearing)
             line = self.geod.InverseLine(wgsCenter.y(), wgsCenter.x(),
@@ -251,8 +246,11 @@ class Renderer(QgsMapLayerRenderer):
                 if iseg in range(3):
                     continue
                 coords = line.Position(iseg * sdist)
-                if iseg != 3 and iseg % 2 == 0:
-                    labels.append(QgsPoint(coords["lon2"], coords["lat2"]))
+                if iseg > 3 and iseg % 2 == 0:
+                    marks.append((
+                        QgsPoint(coords["lon2"], coords["lat2"]),
+                        "%d km" % (iseg / 2)
+                    ))
                 mapPoint = rct.transform(QgsPoint(coords["lon2"],
                                                   coords["lat2"]))
                 poly.append(mapToPixel.transform(mapPoint).toQPointF())
@@ -263,56 +261,8 @@ class Renderer(QgsMapLayerRenderer):
             path = QPainterPath()
             path.addPolygon(poly)
             self.rendererContext.painter().drawPath(path)
-            bearing += 45
 
-            # draw kilometer mark
-            kmLabel = [2, 3, 4, 5]
-            for point in labels:
-                if counter == 0:
-                    bear = self.layer.getAzimut() + 315
-                elif counter == 1:
-                    bear = self.layer.getAzimut()
-                else:
-                    bear = self.layer.getAzimut() + 45
-                for a in range(2):
-                    wgsPoint = self.mDa.computeDestination(
-                        point, 250,
-                        bear)
-                    line = self.geod.InverseLine(point.y(),
-                                                 point.x(),
-                                                 wgsPoint.y(), wgsPoint.x())
-                    poly = QPolygonF()
-                    for iseg in range(5):
-                        coords = line.Position(iseg * 50)
-                        mapPoint = rct.transform(QgsPoint(coords["lon2"],
-                                                          coords["lat2"]))
-                        poly.append(mapToPixel.transform(mapPoint).toQPointF())
-                    line.Position(100)
-                    mapPoint = rct.transform(QgsPoint(coords["lon2"],
-                                                      coords["lat2"]))
-                    poly.append(mapToPixel.transform(mapPoint).toQPointF())
-                    path = QPainterPath()
-                    path.addPolygon(poly)
-                    self.rendererContext.painter().drawPath(path)
-                    bear += 180
-                    # draw label
-                    if a == 0:
-                        if point == labels[-1]:
-                            continue
-                        metrics = QFontMetrics(
-                            self.rendererContext.painter().font())
-                        label = "%s km" % kmLabel[labels.index(point)]
-                        n = poly.size()
-                        dx = poly[n - 2].x() - poly[n - 4].x() if n > 1 else 0
-                        dy = poly[n - 2].y() - poly[n - 4].y() if n > 1 else 0
-                        l = math.sqrt(dx * dx + dy * dy)
-                        d = self.layer.getFontSize()
-                        w = metrics.width(label)
-                        x = poly.last().x() if n < 2 else poly.last().x() + d * dx / l
-                        y = poly.last().y() if n < 2 else poly.last().y() + d * dy / l
-                        self.rendererContext.painter().drawText(
-                            x - 0.5 * w, y - (1.5 * d), w, 2 * d,
-                            Qt.AlignCenter | Qt.AlignHCenter, label)
+            self.drawAxisMarks(rct, metrics, marks, bearing, flip)
 
         self.rendererContext.painter().restore()
         return True
