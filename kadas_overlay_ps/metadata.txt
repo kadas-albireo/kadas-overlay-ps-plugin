@@ -10,7 +10,7 @@
 name=overlay_ps
 qgisMinimumVersion=2.0
 description=This plugin paints an overlay
-version=0.1
+version=1.0
 author=Sourcepole AG
 email=smani@sourcepole.ch
 
