@@ -53,13 +53,11 @@ class OverlayPSTool(QgsMapTool):
             if not found:
                 self.widget.createLayer(self.tr("OverlayPS"))
         self.widget.setVisible(True)
-        # QgsMapTool.activate()
 
     def deactivate(self):
         self.widget.setVisible(False)
         self.picking = False
         self.setCursor(Qt.ArrowCursor)
-        # QgsMapTool.deactivate()
 
     def canvasReleaseEvent(self, event):
         if self.picking:

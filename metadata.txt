@@ -1,7 +1,7 @@
-# This file contains metadata for your plugin. Since 
-# version 2.0 of QGIS this is the proper way to supply 
-# information about a plugin. The old method of 
-# embedding metadata in __init__.py will 
+# This file contains metadata for your plugin. Since
+# version 2.0 of QGIS this is the proper way to supply
+# information about a plugin. The old method of
+# embedding metadata in __init__.py will
 # is no longer supported since version 2.0.
 
 # This file should be included when you package your plugin.# Mandatory items:
@@ -14,10 +14,10 @@ version=0.1
 author=Sourcepole AG
 email=smani@sourcepole.ch
 
-about=Provide a brief description of the plugin and its purpose.
+about=KADAS Overlay PS plugin.
 
-tracker=https://github.com/HusseinKabbout/Overlay-PS/issues
-repository=https://github.com/HusseinKabbout/Overlay-PS
+tracker=
+repository=
 # End of mandatory metadata
 
 # Recommended items:
@@ -28,7 +28,7 @@ repository=https://github.com/HusseinKabbout/Overlay-PS
 # Tags are comma separated with spaces allowed
 tags=python
 
-homepage=http://homepage
+homepage=
 category=Plugins
 icon=icon.png
 # experimental flag
