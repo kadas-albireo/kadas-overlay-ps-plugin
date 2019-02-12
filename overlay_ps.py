@@ -49,14 +49,12 @@ class OverlayPS:
         locale_path = os.path.join(
             self.plugin_dir,
             'i18n',
-            'OverlayPS_{0}.qm'.format(locale))
+            'overlayps_{0}.qm'.format(locale))
 
         if os.path.exists(locale_path):
             self.translator = QTranslator()
             self.translator.load(locale_path)
-
-            if qVersion() > '4.3.3':
-                QCoreApplication.installTranslator(self.translator)
+            QCoreApplication.installTranslator(self.translator)
 
         self.overlay_tool = OverlayPSTool(self.iface)
 
