@@ -14,7 +14,7 @@ class OverlayPSLayer(QgsPluginLayer):
 
         self.setValid(True)
         self.center = QgsPoint()
-        self.azimut = 22.5
+        self.azimut = 202.5
         self.color = Qt.black
         self.lineWidth = 3
         self.fontSize = 10
@@ -109,9 +109,9 @@ class Renderer(QgsMapLayerRenderer):
         QgsMapLayerRenderer.__init__(self, layer.id())
 
         # Constants
-        self.ringRadius = 1750 # meters
-        self.mainAxisLength = 7000 # meters
-        self.flightLineLength = 6000 # meters
+        self.ringRadius = 1750  # meters
+        self.mainAxisLength = 7000  # meters
+        self.flightLineLength = 6000  # meters
 
         self.layer = layer
         self.rendererContext = rendererContext
@@ -125,6 +125,9 @@ class Renderer(QgsMapLayerRenderer):
     def drawAxisMarks(self, rct, metrics, marks, axisbearing, flip):
         # draw kilometer marks
         mapToPixel = self.rendererContext.mapToPixel()
+        font = self.rendererContext.painter().font()
+        font.setBold(True)
+        self.rendererContext.painter().setFont(font)
         for idx, mark in enumerate(marks):
             point, label = mark
             s = -1 if flip else 1
@@ -149,12 +152,14 @@ class Renderer(QgsMapLayerRenderer):
                 dy /= l
             w = metrics.width(label)
             h = self.rendererContext.painter().font().pixelSize()
-            cx = poly[2].x() - dx * 0.6 * w
-            cy = poly[2].y() - dy * 0.6 * w
+            cx = poly[2].x() - dx * 2 * w
+            cy = poly[2].y() - dy * 2 * w
             self.rendererContext.painter().drawText(
                 cx - 0.5 * w, cy - 0.5 * h, w, h,
                 Qt.AlignCenter | Qt.AlignHCenter, label
             )
+        font.setBold(False)
+        self.rendererContext.painter().setFont(font)
 
     def render(self):
         azimut = self.layer.getAzimut()
@@ -200,8 +205,8 @@ class Renderer(QgsMapLayerRenderer):
         # draw main axis
         for bearing, flip in [(azimut, False), (azimut + 180, True)]:
             marks = []
-            wgsPoint = self.mDa.computeDestination(wgsCenter,
-                                    self.mainAxisLength, bearing)
+            wgsPoint = self.mDa.computeDestination(
+                wgsCenter, self.mainAxisLength, bearing)
             line = self.geod.InverseLine(wgsCenter.y(), wgsCenter.x(),
                                          wgsPoint.y(), wgsPoint.x())
             sdist = 1000
@@ -211,7 +216,7 @@ class Renderer(QgsMapLayerRenderer):
                 coords = line.Position(iseg * sdist)
                 marks.append((
                     QgsPoint(coords["lon2"], coords["lat2"]),
-                    "%s km" % iseg if iseg > 0 else None
+                    "%s" % iseg if iseg > 0 else None
                 ))
                 mapPoint = rct.transform(QgsPoint(coords["lon2"],
                                                   coords["lat2"]))
@@ -243,7 +248,7 @@ class Renderer(QgsMapLayerRenderer):
                 if iseg > 3 and iseg % 2 == 0:
                     marks.append((
                         QgsPoint(coords["lon2"], coords["lat2"]),
-                        "%d km" % (iseg / 2)
+                        "%d" % (iseg / 2)
                     ))
                 mapPoint = rct.transform(QgsPoint(coords["lon2"],
                                                   coords["lat2"]))
