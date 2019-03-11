@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string notr="true">OverlayPS</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_2">
    <property name="leftMargin">
@@ -184,7 +184,7 @@
          </sizepolicy>
         </property>
         <property name="suffix">
-         <string> px</string>
+         <string notr="true"> px</string>
         </property>
         <property name="minimum">
          <number>1</number>

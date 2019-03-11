@@ -25,19 +25,52 @@
 <context>
     <name>OverlayPSWidget</name>
     <message>
-        <location filename="../overlay_ps_tool.py" line="127"/>
+        <location filename="../overlay_ps_tool.py" line="125"/>
         <source>Close</source>
         <translation>Fermer</translation>
     </message>
     <message>
-        <location filename="../overlay_ps_tool.py" line="157"/>
+        <location filename="../overlay_ps_tool.py" line="155"/>
         <source>Layer Name</source>
         <translation>Nom de la couche</translation>
     </message>
     <message>
-        <location filename="../overlay_ps_tool.py" line="157"/>
+        <location filename="../overlay_ps_tool.py" line="155"/>
         <source>Enter name of new layer:</source>
         <translation>Nom pour la nouvelle couche:</translation>
+    </message>
+</context>
+<context>
+    <name>QgsOverlayPSWidgetBase</name>
+    <message>
+        <location filename="../overlay_ps_dialog_base.ui" line="78"/>
+        <source>Center:</source>
+        <translation>Centre:</translation>
+    </message>
+    <message>
+        <location filename="../overlay_ps_dialog_base.ui" line="85"/>
+        <source>Azimut:</source>
+        <translation>Azimut:</translation>
+    </message>
+    <message>
+        <location filename="../overlay_ps_dialog_base.ui" line="92"/>
+        <source>Color:</source>
+        <translation>Couleur:</translation>
+    </message>
+    <message>
+        <location filename="../overlay_ps_dialog_base.ui" line="154"/>
+        <source>Line width:</source>
+        <translation>Largeur de trait:</translation>
+    </message>
+    <message>
+        <location filename="../overlay_ps_dialog_base.ui" line="161"/>
+        <source>Font size:</source>
+        <translation>Taille de police:</translation>
+    </message>
+    <message>
+        <location filename="../overlay_ps_dialog_base.ui" line="234"/>
+        <source>Layer:</source>
+        <translation>Couche:</translation>
     </message>
 </context>
 </TS>
