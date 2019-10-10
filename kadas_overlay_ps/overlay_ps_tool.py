@@ -1,12 +1,14 @@
 import os
 
-from PyQt4 import uic
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from qgis.PyQt import uic
+from qgis.PyQt.QtCore import *
+from qgis.PyQt.QtGui import *
+from qgis.PyQt.QtWidgets import *
 from qgis.core import *
 from qgis.gui import *
+from kadas.kadasgui import *
 
-from overlay_ps_layer import OverlayPSLayer
+from .overlay_ps_layer import OverlayPSLayer
 
 OverlayPSWidgetBase = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'overlay_ps_dialog_base.ui'))[0]
@@ -19,10 +21,9 @@ class OverlayPSTool(QgsMapTool):
 
         self.iface = iface
         self.picking = False
-        self.layerTreeView = iface.layerTreeView()
         self.widget = OverlayPSWidget(self.iface)
         self.widget.setVisible(False)
-        self.mapLayerRegistry = QgsMapLayerRegistry.instance()
+        self.qgsProject = QgsProject.instance()
 
         self.widget.requestPickCenter.connect(self.setPicking)
         self.widget.close.connect(self.close)
@@ -31,13 +32,13 @@ class OverlayPSTool(QgsMapTool):
         self.actionEditLayer.setIcon(QIcon(
             ":/images/themes/default/mIconEditable.png"))
         self.actionEditLayer.triggered.connect(self.editCurrentLayer)
-        self.layerTreeView.menuProvider().addLegendLayerAction(
-            self.actionEditLayer, "", "edit_overlayps_layer",
+        self.iface.addCustomActionForLayerType(
+            self.actionEditLayer, "edit_overlayps_layer",
             QgsMapLayer.PluginLayer, False)
 
-        QgsMapLayerRegistry.instance().layerWasAdded.connect(
+        QgsProject.instance().layerWasAdded.connect(
             self.addLayerTreeMenuAction)
-        QgsMapLayerRegistry.instance().layerWillBeRemoved.connect(
+        QgsProject.instance().layerWillBeRemoved.connect(
             self.removeLayerTreeMenuAction)
 
     def activate(self):
@@ -45,7 +46,7 @@ class OverlayPSTool(QgsMapTool):
             self.widget.setLayer(self.iface.mapCanvas().currentLayer())
         else:
             found = False
-            for layer in self.mapLayerRegistry.mapLayers().values():
+            for layer in self.qgsProject.mapLayers().values():
                 if isinstance(layer, OverlayPSLayer):
                     self.widget.setLayer(layer)
                     found = True
@@ -82,14 +83,14 @@ class OverlayPSTool(QgsMapTool):
 
     def addLayerTreeMenuAction(self, mapLayer):
         if isinstance(mapLayer, OverlayPSLayer):
-            self.layerTreeView.menuProvider().addLegendLayerActionForLayer(
-                "edit_overlayps_layer", mapLayer)
+            self.iface.addCustomActionForLayer(
+                self.actionEditLayer, mapLayer)
 
     def removeLayerTreeMenuAction(self, mapLayerId):
-        mapLayer = self.mapLayerRegistry.mapLayer(mapLayerId)
+        mapLayer = self.qgsProject.mapLayer(mapLayerId)
         if isinstance(mapLayer, OverlayPSLayer):
-            self.layerTreeView.menuProvider().removeLegendLayerActionsForLayer(
-                mapLayer)
+            self.iface.removeCustomActionForLayerType(
+                self.actionEditLayer)
 
     def editCurrentLayer(self):
         if isinstance(self.iface.mapCanvas().currentLayer(), OverlayPSLayer):
@@ -99,18 +100,18 @@ class OverlayPSTool(QgsMapTool):
         return QCoreApplication.translate('OverlayPS', message)
 
 
-class OverlayPSWidget(QgsBottomBar, OverlayPSWidgetBase):
+class OverlayPSWidget(KadasBottomBar, OverlayPSWidgetBase):
 
     requestPickCenter = pyqtSignal()
     close = pyqtSignal()
 
     def __init__(self, iface):
-        QgsBottomBar.__init__(self, iface.mapCanvas())
+        KadasBottomBar.__init__(self, iface.mapCanvas())
 
         self.iface = iface
         self.layerTreeView = iface.layerTreeView()
         self.currentLayer = None
-        self.mapLayerRegistry = QgsMapLayerRegistry.instance()
+        self.qgsProject = QgsProject.instance()
 
         self.setLayout(QHBoxLayout())
         self.layout().setSpacing(10)
@@ -135,9 +136,9 @@ class OverlayPSWidget(QgsBottomBar, OverlayPSWidgetBase):
         self.toolButtonColor.colorChanged.connect(self.updateColor)
         self.spinBoxFontSize.valueChanged.connect(self.updateFontSize)
 
-        QgsMapLayerRegistry.instance().layersAdded.connect(
+        QgsProject.instance().layersAdded.connect(
             self.repopulateLayers)
-        QgsMapLayerRegistry.instance().layersRemoved.connect(
+        QgsProject.instance().layersRemoved.connect(
             self.repopulateLayers)
         self.iface.mapCanvas().currentLayerChanged.connect(
             self.updateSelectedLayer)
@@ -161,7 +162,7 @@ class OverlayPSWidget(QgsBottomBar, OverlayPSWidgetBase):
                 self.iface.mapCanvas().extent().center(),
                 self.iface.mapCanvas().mapSettings().destinationCrs(),
                 22.5)
-            self.mapLayerRegistry.addMapLayer(OverlayPsLayer)
+            self.qgsProject.addMapLayer(OverlayPsLayer)
             self.setLayer(OverlayPsLayer)
 
     def setLayer(self, layer):
@@ -227,9 +228,9 @@ class OverlayPSWidget(QgsBottomBar, OverlayPSWidgetBase):
         self.comboBoxLayer.clear()
         idx = 0
         current = 0
-        for layer in self.mapLayerRegistry.mapLayers().values():
+        for layer in self.qgsProject.mapLayers().values():
             if isinstance(layer, OverlayPSLayer):
-                layer.layerNameChanged.connect(self.repopulateLayers)
+                layer.nameChanged.connect(self.repopulateLayers)
                 self.comboBoxLayer.addItem(layer.name(), layer.id())
                 if self.iface.mapCanvas().currentLayer() == layer:
                     current = idx
@@ -240,7 +241,7 @@ class OverlayPSWidget(QgsBottomBar, OverlayPSWidgetBase):
         self.widgetLayerSetup.setEnabled(self.comboBoxLayer.count() > 0)
 
     def currentLayerChanged(self, cur):
-        layer = self.mapLayerRegistry.mapLayer(
+        layer = self.qgsProject.mapLayer(
             self.comboBoxLayer.itemData(cur))
         if isinstance(layer, OverlayPSLayer):
             self.setLayer(layer)
