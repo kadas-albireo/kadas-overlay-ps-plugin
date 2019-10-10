@@ -94,7 +94,7 @@
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="QgsColorButtonV2" name="toolButtonColor">
+       <widget class="QgsColorButton" name="toolButtonColor">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -128,7 +128,7 @@
           <number>0</number>
          </property>
          <item>
-          <widget class="QgsCoordinateInput" name="inputCenter" native="true">
+          <widget class="KadasCoordinateInput" name="inputCenter" native="true">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
              <horstretch>0</horstretch>
@@ -239,15 +239,15 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>QgsColorButtonV2</class>
+   <class>QgsColorButton</class>
    <extends>QToolButton</extends>
    <header>qgis/gui.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>QgsCoordinateInput</class>
+   <class>KadasCoordinateInput</class>
    <extends>QWidget</extends>
-   <header>qgis/gui.h</header>
+   <header>kadas/kadasgui.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

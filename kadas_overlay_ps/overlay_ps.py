@@ -20,11 +20,13 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
-from PyQt4.QtGui import QAction, QIcon
-import resources_rc
-from overlay_ps_tool import OverlayPSTool
-from overlay_ps_layer import OverlayPSLayerType
+from qgis.PyQt.QtCore import *
+from qgis.PyQt.QtGui import *
+from qgis.PyQt.QtWidgets import *
+from kadas.kadasgui import *
+from . import resources_rc
+from .overlay_ps_tool import OverlayPSTool
+from .overlay_ps_layer import OverlayPSLayerType
 import os.path
 from qgis.core import *
 
@@ -40,23 +42,22 @@ class OverlayPS:
             application at run time.
         :type iface: QgisInterface
         """
-        # Save reference to the QGIS interface
-        self.iface = iface
+        # Save reference to the QGIS interface and Kadas interface
+        self.iface = KadasPluginInterface.cast(iface)
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
         # initialize locale
-        locale = QSettings().value('locale/userLocale')[0:2]
-        locale_path = os.path.join(
-            self.plugin_dir,
-            'i18n',
-            'overlayps_{0}.qm'.format(locale))
+        if QSettings().value('locale/userLocale'):
+            locale = QSettings().value('locale/userLocale')[0:2]
+            locale_path = os.path.join(
+                self.plugin_dir,
+                'i18n',
+                'overlayps_{0}.qm'.format(locale))
 
-        if os.path.exists(locale_path):
-            self.translator = QTranslator()
-            self.translator.load(locale_path)
-            QCoreApplication.installTranslator(self.translator)
-
-        self.overlay_tool = OverlayPSTool(self.iface)
+            if os.path.exists(locale_path):
+                self.translator = QTranslator()
+                self.translator.load(locale_path)
+                QCoreApplication.installTranslator(self.translator)
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -75,7 +76,6 @@ class OverlayPS:
 
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
-
         icon_path = ':/plugins/OverlayPS/icon.png'
         icon = QIcon(icon_path)
 
@@ -85,13 +85,15 @@ class OverlayPS:
         self.action.setEnabled(True)
 
         self.iface.addAction(self.action, self.iface.PLUGIN_MENU,
-                             self.iface.NO_TOOLBAR, self.iface.DRAW_TAB)
+                             self.iface.DRAW_TAB)
 
         self.pluginLayerType = OverlayPSLayerType()
-        QgsPluginLayerRegistry.instance().addPluginLayerType(self.pluginLayerType)
+        QgsApplication.pluginLayerRegistry().addPluginLayerType(
+            self.pluginLayerType)
 
     def unload(self):
         pass
 
     def activateTool(self):
+        self.overlay_tool = OverlayPSTool(self.iface)
         self.iface.mapCanvas().setMapTool(self.overlay_tool)
