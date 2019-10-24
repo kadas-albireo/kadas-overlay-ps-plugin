@@ -141,7 +141,7 @@
           <widget class="QToolButton" name="toolButtonPickCenter">
            <property name="icon">
             <iconset>
-             <normaloff>:/images/themes/default/mActionPick.svg</normaloff>:/images/themes/default/mActionPick.svg</iconset>
+             <normaloff>:/kadas/icons/pick</normaloff>:/kadas/icons/pick</iconset>
            </property>
           </widget>
          </item>
@@ -201,7 +201,7 @@
     <widget class="QToolButton" name="toolButtonAddLayer">
      <property name="icon">
       <iconset>
-       <normaloff>:/images/themes/default/mActionAdd.png</normaloff>:/images/themes/default/mActionAdd.png</iconset>
+       <normaloff>:/images/themes/default/mActionAdd.svg</normaloff>:/images/themes/default/mActionAdd.svg</iconset>
      </property>
     </widget>
    </item>
