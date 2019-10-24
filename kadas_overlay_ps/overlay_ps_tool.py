@@ -122,7 +122,7 @@ class OverlayPSWidget(KadasBottomBar, OverlayPSWidgetBase):
 
         closeButton = QPushButton()
         closeButton.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
-        closeButton.setIcon(QIcon(":/images/themes/default/mIconClose.png"))
+        closeButton.setIcon(QIcon(":/kadas/icons/close"))
         closeButton.setToolTip(self.tr("Close"))
         closeButton.clicked.connect(self.close)
         self.layout().addWidget(closeButton)
