@@ -81,19 +81,24 @@ class OverlayPS:
 
         self.action = QAction(icon, self.tr(u'Overlay PS'),
                               self.iface.mainWindow())
-        self.action.triggered.connect(self.activateTool)
-        self.action.setEnabled(True)
+        self.action.setCheckable(True)
+        self.action.toggled.connect(self.toolToggled)
 
         self.iface.addAction(self.action, self.iface.PLUGIN_MENU,
                              self.iface.DRAW_TAB)
 
-        self.pluginLayerType = OverlayPSLayerType()
+        self.pluginLayerType = OverlayPSLayerType(self.action)
         QgsApplication.pluginLayerRegistry().addPluginLayerType(
             self.pluginLayerType)
 
     def unload(self):
-        pass
+        self.iface.removeAction(self.action, self.iface.PLUGIN_MENU,
+                                self.iface.DRAW_TAB)
 
-    def activateTool(self):
-        self.overlay_tool = OverlayPSTool(self.iface)
-        self.iface.mapCanvas().setMapTool(self.overlay_tool)
+    def toolToggled(self, active):
+        if active:
+            self.overlay_tool = OverlayPSTool(self.iface)
+            self.overlay_tool.setAction(self.action)
+            self.iface.mapCanvas().setMapTool(self.overlay_tool)
+        elif self.iface.mapCanvas().mapTool() and self.iface.mapCanvas().mapTool().action() == self.action:
+            self.iface.mapCanvas().unsetMapTool(self.iface.mapCanvas().mapTool())

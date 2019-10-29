@@ -28,19 +28,6 @@ class OverlayPSTool(QgsMapTool):
         self.widget.requestPickCenter.connect(self.setPicking)
         self.widget.close.connect(self.close)
 
-        self.actionEditLayer = QAction(self.tr("Edit"), self)
-        self.actionEditLayer.setIcon(QIcon(
-            ":/images/themes/default/mIconEditable.png"))
-        self.actionEditLayer.triggered.connect(self.editCurrentLayer)
-        self.iface.addCustomActionForLayerType(
-            self.actionEditLayer, "edit_overlayps_layer",
-            QgsMapLayer.PluginLayer, False)
-
-        QgsProject.instance().layerWasAdded.connect(
-            self.addLayerTreeMenuAction)
-        QgsProject.instance().layerWillBeRemoved.connect(
-            self.removeLayerTreeMenuAction)
-
     def activate(self):
         if isinstance(self.iface.mapCanvas().currentLayer(), OverlayPSLayer):
             self.widget.setLayer(self.iface.mapCanvas().currentLayer())
@@ -54,11 +41,13 @@ class OverlayPSTool(QgsMapTool):
             if not found:
                 self.widget.createLayer(self.tr("OverlayPS"))
         self.widget.setVisible(True)
+        QgsMapTool.activate(self)
 
     def deactivate(self):
         self.widget.setVisible(False)
         self.picking = False
         self.setCursor(Qt.ArrowCursor)
+        QgsMapTool.deactivate(self)
 
     def canvasReleaseEvent(self, event):
         if self.picking:
@@ -80,24 +69,6 @@ class OverlayPSTool(QgsMapTool):
 
     def close(self):
         self.iface.mapCanvas().unsetMapTool(self)
-
-    def addLayerTreeMenuAction(self, mapLayer):
-        if isinstance(mapLayer, OverlayPSLayer):
-            self.iface.addCustomActionForLayer(
-                self.actionEditLayer, mapLayer)
-
-    def removeLayerTreeMenuAction(self, mapLayerId):
-        mapLayer = self.qgsProject.mapLayer(mapLayerId)
-        if isinstance(mapLayer, OverlayPSLayer):
-            self.iface.removeCustomActionForLayerType(
-                self.actionEditLayer)
-
-    def editCurrentLayer(self):
-        if isinstance(self.iface.mapCanvas().currentLayer(), OverlayPSLayer):
-            self.iface.mapCanvas().setMapTool(self)
-
-    def tr(self, message):
-        return QCoreApplication.translate('OverlayPS', message)
 
 
 class OverlayPSWidget(KadasBottomBar, OverlayPSWidgetBase):
