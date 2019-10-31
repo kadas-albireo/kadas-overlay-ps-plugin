@@ -21,33 +21,35 @@ class OverlayPSTool(QgsMapTool):
 
         self.iface = iface
         self.picking = False
-        self.widget = OverlayPSWidget(self.iface)
-        self.widget.setVisible(False)
-        self.qgsProject = QgsProject.instance()
 
+        layer = iface.layerTreeView().currentLayer()
+        if not layer:
+            for layerId  in QgsProject.instance().mapLayers():
+                projLayer = QgsProject.instance().mapLayer(layerId)
+                if isinstance(projLayer, OverlayPSLayer):
+                    layer = projLayer
+                    break
+
+        self.widget = OverlayPSWidget(self.iface, layer)
+
+        self.setCursor(Qt.ArrowCursor)
         self.widget.requestPickCenter.connect(self.setPicking)
         self.widget.close.connect(self.close)
 
     def activate(self):
-        if isinstance(self.iface.mapCanvas().currentLayer(), OverlayPSLayer):
-            self.widget.setLayer(self.iface.mapCanvas().currentLayer())
-        else:
-            found = False
-            for layer in self.qgsProject.mapLayers().values():
-                if isinstance(layer, OverlayPSLayer):
-                    self.widget.setLayer(layer)
-                    found = True
-                    break
-            if not found:
-                self.widget.createLayer(self.tr("OverlayPS"))
-        self.widget.setVisible(True)
+        self.widget.show()
         QgsMapTool.activate(self)
 
     def deactivate(self):
-        self.widget.setVisible(False)
-        self.picking = False
-        self.setCursor(Qt.ArrowCursor)
+        self.widget.hide()
         QgsMapTool.deactivate(self)
+
+    def setPicking(self, picking=True):
+        self.picking = picking
+        self.setCursor(Qt.CrossCursor if picking else Qt.ArrowCursor)
+
+    def close(self):
+        self.iface.mapCanvas().unsetMapTool(self)
 
     def canvasReleaseEvent(self, event):
         if self.picking:
@@ -63,26 +65,18 @@ class OverlayPSTool(QgsMapTool):
             else:
                 self.iface.mapCanvas().unsetMapTool(self)
 
-    def setPicking(self, picking=True):
-        self.picking = picking
-        self.setCursor(Qt.CrossCursor if picking else Qt.ArrowCursor)
-
-    def close(self):
-        self.iface.mapCanvas().unsetMapTool(self)
-
 
 class OverlayPSWidget(KadasBottomBar, OverlayPSWidgetBase):
 
     requestPickCenter = pyqtSignal()
     close = pyqtSignal()
 
-    def __init__(self, iface):
+    def __init__(self, iface, layer):
         KadasBottomBar.__init__(self, iface.mapCanvas())
 
         self.iface = iface
         self.layerTreeView = iface.layerTreeView()
         self.currentLayer = None
-        self.qgsProject = QgsProject.instance()
 
         self.setLayout(QHBoxLayout())
         self.layout().setSpacing(10)
@@ -90,6 +84,11 @@ class OverlayPSWidget(KadasBottomBar, OverlayPSWidgetBase):
         base = QWidget()
         self.setupUi(base)
         self.layout().addWidget(base)
+
+        layerFilter = lambda layer: isinstance(layer, OverlayPSLayer)
+        layerCreator = lambda name: self.createLayer(name)
+        self.layerSelectionWidget = KadasLayerSelectionWidget(iface.mapCanvas(), iface.layerTreeView(), layerFilter, layerCreator)
+        self.layerSelectionWidgetHolder.addWidget(self.layerSelectionWidget)
 
         closeButton = QPushButton()
         closeButton.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
@@ -99,44 +98,26 @@ class OverlayPSWidget(KadasBottomBar, OverlayPSWidgetBase):
         self.layout().addWidget(closeButton)
         self.layout().setAlignment(closeButton, Qt.AlignTop)
 
-        self.toolButtonAddLayer.clicked.connect(self.createLayer)
         self.inputCenter.coordinateChanged.connect(self.updateLayer)
         self.toolButtonPickCenter.clicked.connect(self.requestPickCenter)
         self.spinBoxAzimut.valueChanged.connect(self.updateLayer)
         self.spinBoxLineWidth.valueChanged.connect(self.updateLineWidth)
         self.toolButtonColor.colorChanged.connect(self.updateColor)
         self.spinBoxFontSize.valueChanged.connect(self.updateFontSize)
+        self.layerSelectionWidget.selectedLayerChanged.connect(self.setCurrentLayer)
 
-        QgsProject.instance().layersAdded.connect(
-            self.repopulateLayers)
-        QgsProject.instance().layersRemoved.connect(
-            self.repopulateLayers)
-        self.iface.mapCanvas().currentLayerChanged.connect(
-            self.updateSelectedLayer)
-
-        self.repopulateLayers()
-        self.comboBoxLayer.currentIndexChanged.connect(
-            self.currentLayerChanged)
-
-    def centerPicked(self, pos):
-        self.inputCenter.setCoordinate(
-            pos, self.iface.mapCanvas().mapSettings().destinationCrs())
+        self.layerSelectionWidget.setSelectedLayer(layer)
+        self.layerSelectionWidget.createLayerIfEmpty(self.tr("Overlay PS"))
 
     def createLayer(self, layerName):
-        if not layerName:
-            layerName = QInputDialog.getText(
-                self, self.tr("Layer Name"),
-                self.tr("Enter name of new layer:"))[0]
-        if layerName:
-            OverlayPsLayer = OverlayPSLayer(layerName)
-            OverlayPsLayer.setup(
-                self.iface.mapCanvas().extent().center(),
-                self.iface.mapCanvas().mapSettings().destinationCrs(),
-                22.5)
-            self.qgsProject.addMapLayer(OverlayPsLayer)
-            self.setLayer(OverlayPsLayer)
+        layer = OverlayPSLayer(layerName)
+        layer.setup(
+            self.iface.mapCanvas().extent().center(),
+            self.iface.mapCanvas().mapSettings().destinationCrs(),
+            22.5)
+        return layer
 
-    def setLayer(self, layer):
+    def setCurrentLayer(self, layer):
         if layer == self.currentLayer:
             return
 
@@ -145,12 +126,6 @@ class OverlayPSWidget(KadasBottomBar, OverlayPSWidgetBase):
         if not self.currentLayer:
             self.widgetLayerSetup.setEnabled(False)
             return
-        self.comboBoxLayer.blockSignals(True)
-        self.comboBoxLayer.setCurrentIndex(self.comboBoxLayer.findData(
-            self.currentLayer.id()))
-        self.comboBoxLayer.blockSignals(False)
-        self.layerTreeView.setLayerVisible(self.currentLayer, True)
-        self.iface.mapCanvas().setCurrentLayer(self.currentLayer)
 
         self.inputCenter.blockSignals(True)
         self.inputCenter.setCoordinate(self.currentLayer.getCenter(),
@@ -167,6 +142,10 @@ class OverlayPSWidget(KadasBottomBar, OverlayPSWidgetBase):
         self.toolButtonColor.blockSignals(False)
         self.widgetLayerSetup.setEnabled(True)
         self.spinBoxFontSize.setValue(self.currentLayer.getFontSize())
+
+    def centerPicked(self, pos):
+        self.inputCenter.setCoordinate(
+            pos, self.iface.mapCanvas().mapSettings().destinationCrs())
 
     def updateLayer(self):
         if not self.currentLayer or self.inputCenter.isEmpty():
@@ -191,39 +170,3 @@ class OverlayPSWidget(KadasBottomBar, OverlayPSWidgetBase):
         if self.currentLayer:
             self.currentLayer.setFontSize(fontSize)
             self.currentLayer.triggerRepaint()
-
-    def repopulateLayers(self):
-        if self.comboBoxLayer.signalsBlocked():
-            return
-        self.comboBoxLayer.blockSignals(True)
-        self.comboBoxLayer.clear()
-        idx = 0
-        current = 0
-        for layer in self.qgsProject.mapLayers().values():
-            if isinstance(layer, OverlayPSLayer):
-                layer.nameChanged.connect(self.repopulateLayers)
-                self.comboBoxLayer.addItem(layer.name(), layer.id())
-                if self.iface.mapCanvas().currentLayer() == layer:
-                    current = idx
-                idx += 1
-        self.comboBoxLayer.setCurrentIndex(-1)
-        self.comboBoxLayer.blockSignals(False)
-        self.comboBoxLayer.setCurrentIndex(current)
-        self.widgetLayerSetup.setEnabled(self.comboBoxLayer.count() > 0)
-
-    def currentLayerChanged(self, cur):
-        layer = self.qgsProject.mapLayer(
-            self.comboBoxLayer.itemData(cur))
-        if isinstance(layer, OverlayPSLayer):
-            self.setLayer(layer)
-        else:
-            self.widgetLayerSetup.setEnabled(False)
-
-    def updateSelectedLayer(self, layer):
-        if not layer:
-            return
-        if isinstance(layer, OverlayPSLayer):
-            self.setLayer(layer)
-
-    def tr(self, message):
-        return QCoreApplication.translate('OverlayPS', message)

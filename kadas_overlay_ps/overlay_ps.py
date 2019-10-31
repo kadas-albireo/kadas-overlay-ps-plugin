@@ -102,3 +102,4 @@ class OverlayPS:
             self.iface.mapCanvas().setMapTool(self.overlay_tool)
         elif self.iface.mapCanvas().mapTool() and self.iface.mapCanvas().mapTool().action() == self.action:
             self.iface.mapCanvas().unsetMapTool(self.iface.mapCanvas().mapTool())
+            self.overlay_tool = None
