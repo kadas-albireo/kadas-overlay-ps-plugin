@@ -11,7 +11,7 @@ name=overlay_ps
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=This plugin paints an overlay
-version=1.90
+version=1.91
 author=Sourcepole AG
 email=smani@sourcepole.ch
 
@@ -22,6 +22,9 @@ repository=
 # End of mandatory metadata
 
 changelog=
+ Rev 1.91 (28.01.2020)
+  - Ensure a layer is selected when tool is activated, if a layer exists
+
  Rev 1.90 (31.10.2019)
   - Initial port to Kadas 2
 
