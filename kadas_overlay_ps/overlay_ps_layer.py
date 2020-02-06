@@ -289,10 +289,7 @@ class OverlayPSLayerType(KadasPluginLayerType):
         self.actionEditLayer = QAction(QIcon(":/images/themes/default/mActionToggleEditing.svg"), self.tr("Edit"), self)
         self.actionEditLayer.triggered.connect(lambda: actionPSLayer.trigger())
 
-    def createLayer(self):
-        return OverlayPSLayer("OverlayPS")
-
-    def createLayer(self, uri):
+    def createLayer(self, uri=None):
         return OverlayPSLayer("OverlayPS")
 
     def addLayerTreeMenuActions(self, menu, layer):
