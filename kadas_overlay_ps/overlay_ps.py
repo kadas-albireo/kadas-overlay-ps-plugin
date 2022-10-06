@@ -94,6 +94,8 @@ class OverlayPS:
     def unload(self):
         self.iface.removeAction(self.action, self.iface.PLUGIN_MENU,
                                 self.iface.DRAW_TAB)
+        QgsApplication.pluginLayerRegistry().removePluginLayerType(
+            self.pluginLayerType.name())
 
     def toolToggled(self, active):
         if active:
