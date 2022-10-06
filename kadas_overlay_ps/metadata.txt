@@ -11,7 +11,7 @@ name=overlay_ps
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=This plugin paints an overlay
-version=2.0.0
+version=2.0.1
 author=Sourcepole AG
 email=smani@sourcepole.ch
 
@@ -22,6 +22,9 @@ repository=
 # End of mandatory metadata
 
 changelog=
+ Rev 2.0.1 (06.10.2022)
+  - Unregister plugin layer type on unload
+
  Rev 2.0.0 (18.06.2020)
   - Set version to 2.0.0
 
