@@ -31,6 +31,7 @@ class OverlayPSTool(QgsMapTool):
                     break
 
         self.widget = OverlayPSWidget(self.iface, layer)
+        self.widget.adjustSize()
 
         self.setCursor(Qt.ArrowCursor)
         self.widget.requestPickCenter.connect(self.setPicking)
