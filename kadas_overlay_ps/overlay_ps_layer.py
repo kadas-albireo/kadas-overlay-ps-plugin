@@ -17,7 +17,7 @@ class OverlayPSLayer(KadasPluginLayer):
         self.setValid(True)
         self.center = QgsPointXY()
         self.azimut = 202.5
-        self.color = Qt.black
+        self.color = Qt.GlobalColor.black
         self.lineWidth = 3
         self.fontSize = 10
         self.transparency = 0
@@ -162,7 +162,7 @@ class Renderer(QgsMapLayerRenderer):
             cy = poly[2].y() - dy * 2 * w
             self.rendererContext.painter().drawText(
                 cx - 0.5 * w, cy - 0.5 * h, w, h,
-                Qt.AlignCenter | Qt.AlignHCenter, label
+                Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignHCenter, label
             )
         font.setBold(False)
         self.rendererContext.painter().setFont(font)
@@ -175,7 +175,7 @@ class Renderer(QgsMapLayerRenderer):
         self.rendererContext.painter().setOpacity((
             100. - self.layer.transparency) / 100.)
         self.rendererContext.painter().setCompositionMode(
-            QPainter.CompositionMode_Source)
+            QPainter.CompositionMode.CompositionMode_Source)
         self.rendererContext.painter().setPen(
             QPen(self.layer.color, self.layer.lineWidth))
         font = self.rendererContext.painter().font()
