@@ -156,7 +156,7 @@ class Renderer(QgsMapLayerRenderer):
             if l > 1E-6:
                 dx /= l
                 dy /= l
-            w = metrics.width(label)
+            w = metrics.horizontalAdvance(label)
             h = self.rendererContext.painter().font().pixelSize()
             cx = poly[2].x() - dx * 2 * w
             cy = poly[2].y() - dy * 2 * w
