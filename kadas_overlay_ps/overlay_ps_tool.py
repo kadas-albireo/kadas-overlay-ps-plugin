@@ -33,7 +33,7 @@ class OverlayPSTool(QgsMapTool):
         self.widget = OverlayPSWidget(self.iface, layer)
         self.widget.adjustSize()
 
-        self.setCursor(Qt.ArrowCursor)
+        self.setCursor(Qt.CursorShape.ArrowCursor)
         self.widget.requestPickCenter.connect(self.setPicking)
         self.widget.close.connect(self.close)
 
@@ -47,7 +47,7 @@ class OverlayPSTool(QgsMapTool):
 
     def setPicking(self, picking=True):
         self.picking = picking
-        self.setCursor(Qt.CrossCursor if picking else Qt.ArrowCursor)
+        self.setCursor(Qt.CursorShape.CrossCursor if picking else Qt.CursorShape.ArrowCursor)
 
     def close(self):
         self.iface.mapCanvas().unsetMapTool(self)
@@ -56,11 +56,11 @@ class OverlayPSTool(QgsMapTool):
         if self.picking:
             self.widget.centerPicked(self.toMapCoordinates(event.pos()))
             self.setPicking(False)
-        elif event.button() == Qt.RightButton:
+        elif event.button() == Qt.MouseButton.RightButton:
             self.iface.mapCanvas().unsetMapTool(self)
 
     def keyReleaseEvent(self, event):
-        if event.key() == Qt.Key_Escape:
+        if event.key() == Qt.Key.Key_Escape:
             if self.picking:
                 self.setPicking(False)
             else:
@@ -92,12 +92,12 @@ class OverlayPSWidget(KadasBottomBar, OverlayPSWidgetBase):
         self.layerSelectionWidgetHolder.addWidget(self.layerSelectionWidget)
 
         closeButton = QPushButton()
-        closeButton.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        closeButton.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         closeButton.setIcon(QIcon(":/kadas/icons/close"))
         closeButton.setToolTip(self.tr("Close"))
         closeButton.clicked.connect(self.close)
         self.layout().addWidget(closeButton)
-        self.layout().setAlignment(closeButton, Qt.AlignTop)
+        self.layout().setAlignment(closeButton, Qt.AlignmentFlag.AlignTop)
 
         self.inputCenter.coordinateChanged.connect(self.updateLayer)
         self.toolButtonPickCenter.clicked.connect(self.requestPickCenter)
