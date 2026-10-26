@@ -24,12 +24,12 @@ from qgis.PyQt.QtCore import *
 from qgis.PyQt.QtGui import *
 from qgis.PyQt.QtWidgets import *
 from kadas.kadasgui import *
-from . import resources_rc
 from .overlay_ps_tool import OverlayPSTool
 from .overlay_ps_layer import OverlayPSLayerType
 import os.path
 from qgis.core import *
 
+PLUGIN_DIR = os.path.dirname(__file__)
 
 class OverlayPS:
     """QGIS Plugin Implementation."""
@@ -76,7 +76,7 @@ class OverlayPS:
 
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
-        icon_path = ':/plugins/OverlayPS/icon.png'
+        icon_path = os.path.join(PLUGIN_DIR, 'icon.png')
         icon = QIcon(icon_path)
 
         self.action = QAction(icon, self.tr(u'Overlay PS'),
